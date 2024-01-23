@@ -56,19 +56,75 @@ export default function SurveyQuestionList({
   );
 
   const handlePositionChange = async (event: SortableEvent) => {
-    if (!isNumber(event.oldIndex)) return;
-    const question = questions[event.oldIndex];
-    const response = await fetch(
-      `/api/surveys/${surveyId}/questions/${question.id}`,
-      {
+    // Check if oldIndex is a number
+    if (!isNumber(event.oldIndex) || !isNumber(event.newIndex)) return;
+
+    // Create a copy of the questions array
+    let newQuestions = [...questions];
+
+    // Remove the question from its old position
+    let [movedQuestion] = newQuestions.splice(event.oldIndex, 1);
+
+    // Insert the question at its new position
+    newQuestions.splice(event.newIndex, 0, movedQuestion);
+
+    // Update the positions of all questions
+    newQuestions.forEach((question, index) => {
+      question.position = index;
+    });
+
+    // Set the new questions array
+    setQuestions(newQuestions);
+
+    // Send the updated questions to the server
+    for (let question of newQuestions) {
+      await fetch(`/api/surveys/${surveyId}/questions/${question.id}`, {
         method: "PATCH",
         body: JSON.stringify({
-          position: event.newIndex,
+          position: question.position,
         }),
-      }
-    );
-    const { data } = await response.json();
-    console.log(data);
+      });
+    }
+
+    getQuestions();
+  };
+
+  const handleIsRequiredChange = async (
+    questionId: string,
+    required: boolean
+  ) => {
+    await fetch(`/api/surveys/${surveyId}/questions/${questionId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        required,
+      }),
+    });
+
+    getQuestions();
+  };
+
+  const deleteQuestion = async (questionId: string) => {
+    await fetch(`/api/surveys/${surveyId}/questions/${questionId}`, {
+      method: "DELETE",
+    });
+
+    getQuestions();
+  };
+
+  const cloneQuestion = async (question: QuestionsDTO["data"][0]) => {
+    const newPosition = questions.length;
+    await fetch(`/api/surveys/${surveyId}/questions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...question,
+        position: newPosition,
+      }),
+    });
+
+    getQuestions();
   };
 
   useEffect(() => {
@@ -114,14 +170,18 @@ export default function SurveyQuestionList({
               {item.text}
             </div>
             <div className="col-span-1">
-              <Switch />
+              <Switch
+                id={item.id}
+                initialState={item.required}
+                onToggle={(state) => handleIsRequiredChange(item.id, state)}
+              />
             </div>
             <div className="col-span-1 flex items-center justify-end">
               <button className="hover:text-primary py-2 px-2 rounded text-lg">
-                <FaClone />
+                <FaClone onClick={() => cloneQuestion(item)} />
               </button>
               <button className="hover:text-primary py-2 px-2 rounded text-lg">
-                <FaTrash />
+                <FaTrash onClick={() => deleteQuestion(item.id)} />
               </button>
             </div>
           </div>

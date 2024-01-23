@@ -41,7 +41,7 @@ export default async function SurveyEditPage({
       <SurveyForm
         title={title}
         defaultValues={survey}
-        updateSurvey={updateSurvey}
+        actionSurvey={updateSurvey}
       />
       <SurveyQuestionList surveyId={surveyId} />
     </div>

@@ -1,23 +1,33 @@
 "use client";
 import { useState } from "react";
+interface SwitchProps {
+  id: string;
+  initialState: boolean;
+  onToggle: (state: boolean) => void;
+}
 
-export default function Switch() {
-  const [enabled, setEnabled] = useState(false);
+export default function Switch({ id, initialState, onToggle }: SwitchProps) {
+  const [enabled, setEnabled] = useState(initialState);
+
+  const handleToggle = () => {
+    const newState = !enabled;
+    setEnabled(newState);
+    onToggle(newState);
+  };
 
   return (
     <div>
       <label
-        htmlFor="toggle3"
+        htmlFor={id}
         className="flex cursor-pointer select-none items-center"
       >
         <div className="relative">
           <input
             type="checkbox"
-            id="toggle3"
+            id={id}
             className="sr-only"
-            onChange={() => {
-              setEnabled(!enabled);
-            }}
+            checked={enabled}
+            onChange={handleToggle}
           />
           <div className="block h-8 w-14 rounded-full bg-meta-9 dark:bg-[#5A616B]"></div>
           <div

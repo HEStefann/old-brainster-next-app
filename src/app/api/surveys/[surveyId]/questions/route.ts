@@ -54,3 +54,22 @@ export const POST = routeHandler(async (request, context) => {
 
   return surveyWithQuestions;
 });
+
+export const DELETE = routeHandler(async (_, context) => {
+  const { surveyId } = context.params;
+  const response = await prisma.survey.update({
+    where: {
+      id: surveyId,
+    },
+    data: {
+      questions: {
+        deleteMany: {},
+      },
+    },
+    include: {
+      questions: true,
+    },
+  });
+
+  return response;
+});
